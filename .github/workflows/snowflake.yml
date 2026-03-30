@@ -1,0 +1,32 @@
+name: Snowflake CI Pipeline
+ 
+on:
+  push:
+    branches:
+      - main
+ 
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+ 
+      - name: Install SnowSQL
+        run: |
+          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/latest/snowsql-linux_x86_64.bash
+          bash snowsql-linux_x86_64.bash
+ 
+      - name: Execute SQL Scripts
+        env:
+          SNOWSQL_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWSQL_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWSQL_PWD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          SNOWSQL_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWSQL_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SNOWSQL_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+        run: |
+          snowsql -q "USE DATABASE $SNOWSQL_DATABASE;"
+          snowsql -q "USE SCHEMA $SNOWSQL
+ 
