@@ -7,7 +7,7 @@ CREATE OR REPLACE TABLE RAW_TABLE (
     name STRING 
 );
 
-INSERT INTO RAW_TABLE (id, name) VALUES
+INSERT INTO RAW_TABLE (id, name) VALUES 
 (1, 'pranjal'),
 (2, 'snowflake'),
 (3, 'pipeline');
