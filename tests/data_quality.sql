@@ -1,1 +1,10 @@
-
+USE DATABASE Gittrial;
+USE SCHEMA TRIAL;
+ 
+SELECT
+    CASE
+        WHEN COUNT(*) > 0 THEN
+            ERROR('Null IDs found!')
+    END
+FROM CLEAN_TABLE
+WHERE id IS NULL;
