@@ -3,7 +3,7 @@ USE SCHEMA TRIAL;
  
 CREATE OR REPLACE TABLE CLEAN_TABLE AS
 SELECT
-    id,
+    id, 
     TRIM(UPPER(name)) AS name,
     CURRENT_TIMESTAMP() AS processed_at
 FROM RAW_TABLE;
