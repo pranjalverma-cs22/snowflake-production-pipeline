@@ -11,42 +11,58 @@ jobs:
     runs-on: ubuntu-latest
  
     steps:
+      # 1. Checkout code
       - name: Checkout Repository
         uses: actions/checkout@v3
  
-      - name: Install SnowSQL
-        run: |
-          wget https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/latest/snowsql-linux_x86_64.bash
-          chmod +x snowsql-linux_x86_64.bash
-          ./snowsql-linux_x86_64.bash -y
+      # 2. Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
  
-      - name: Verify SnowSQL
+      # 3. Install Snowflake Connector
+      - name: Install Snowflake Connector
         run: |
-          snowsql --version
+          pip install snowflake-connector-python
  
-      - name: Execute SQL Scripts
+      # 4. Run SQL via Python
+      - name: Execute Pipeline
         env:
-          SNOWSQL_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWSQL_USER: ${{ secrets.SNOWFLAKE_USER }}
-          SNOWSQL_PWD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-          SNOWSQL_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
-          SNOWSQL_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-          SNOWSQL_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
+          ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          USER: ${{ secrets.SNOWFLAKE_USER }}
+          PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
+          SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
         run: |
-          snowsql -q "USE WAREHOUSE $SNOWSQL_WAREHOUSE;"
-          snowsql -q "USE DATABASE $SNOWSQL_DATABASE;"
-          snowsql -q "USE SCHEMA $SNOWSQL_SCHEMA;"
+          python <<EOF
+          import snowflake.connector
  
-          snowsql -f sql/raw.sql
-          snowsql -f sql/clean.sql
-          snowsql -f sql/consumption.sql
+          conn = snowflake.connector.connect(
+              user="$USER",
+              password="$PASSWORD",
+              account="$ACCOUNT",
+              warehouse="$WAREHOUSE",
+              database="$DATABASE",
+              schema="$SCHEMA"
+          )
  
-      - name: Run Data Quality Tests
-        env:
-          SNOWSQL_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWSQL_USER: ${{ secrets.SNOWFLAKE_USER }}
-          SNOWSQL_PWD: ${{ secrets.SNOWFLAKE_PASSWORD }}
-          SNOWSQL_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
-          SNOWSQL_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
-        run: |
-          snowsql -f tests/data_quality.sql
+          cursor = conn.cursor()
+ 
+          def run_sql(file):
+              with open(file, 'r') as f:
+                  sql = f.read()
+                  for stmt in sql.split(';'):
+                      if stmt.strip():
+                          cursor.execute(stmt)
+ 
+          run_sql("sql/raw.sql")
+          run_sql("sql/clean.sql")
+          run_sql("sql/consumption.sql")
+          run_sql("tests/data_quality.sql")
+ 
+          cursor.close()
+          conn.close()
+          print("Pipeline executed successfully!")
+          EOF
