@@ -4,7 +4,7 @@ Use SCHEMA TRIAL;
 
 CREATE OR REPLACE TABLE RAW_TABLE (
     id INT,
-    name STRING
+    name STRING 
 );
 
 INSERT INTO RAW_TABLE (id, name) VALUES
