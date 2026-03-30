@@ -45,7 +45,8 @@ jobs:
               account="$ACCOUNT",
               warehouse="$WAREHOUSE",
               database="$DATABASE",
-              schema="$SCHEMA"
+              schema="$SCHEMA",
+              role="GITHUB_ROLE"
           )
  
           cursor = conn.cursor()
