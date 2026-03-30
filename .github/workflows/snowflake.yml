@@ -4,20 +4,30 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
  
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
  
     steps:
+      # 1. Checkout repo
       - name: Checkout Repository
         uses: actions/checkout@v3
  
+      # 2. Install SnowSQL (FIXED VERSION)
       - name: Install SnowSQL
         run: |
-          curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/latest/snowsql-linux_x86_64.bash
-          bash snowsql-linux_x86_64.bash
+          wget https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/latest/snowsql-linux_x86_64.bash
+          chmod +x snowsql-linux_x86_64.bash
+          ./snowsql-linux_x86_64.bash -y
  
+      # 3. Verify installation (optional but useful)
+      - name: Verify SnowSQL
+        run: |
+          snowsql --version
+ 
+      # 4. Execute SQL scripts
       - name: Execute SQL Scripts
         env:
           SNOWSQL_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
@@ -27,6 +37,13 @@ jobs:
           SNOWSQL_DATABASE: ${{ secrets.SNOWFLAKE_DATABASE }}
           SNOWSQL_SCHEMA: ${{ secrets.SNOWFLAKE_SCHEMA }}
         run: |
+          snowsql -q "USE WAREHOUSE $SNOWSQL_WAREHOUSE;"
           snowsql -q "USE DATABASE $SNOWSQL_DATABASE;"
-          snowsql -q "USE SCHEMA $SNOWSQL
+          snowsql -q "USE SCHEMA $SNOWSQL_SCHEMA;"
  
+          snowsql -f sql/raw.sql
+          snowsql -f sql/clean.sql
+          snowsql -f sql/consumption.sql
+ 
+      # 5. Run data quality checks
+      - name
