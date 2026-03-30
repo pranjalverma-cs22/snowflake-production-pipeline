@@ -7,3 +7,4 @@ SELECT
     TRIM(UPPER(name)) AS name,
     CURRENT_TIMESTAMP() AS processed_at
 FROM RAW_TABLE;
+ 
